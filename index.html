@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Ads 성과 & 이상 징후 분석 대시보드 | Intelligence Hub</title>
+  <meta name="description" content="Mastercard 디자인 시스템 기반의 구글 검색 광고 일자별 트렌드 분석, 제품/지표별 성과 시각화, 국가별/캠페인별 볼륨 및 변동폭 랭킹 인텔리전스 대시보드">
+  
+  <!-- Typography (Mastercard MarkForMC fallback: Sofia Sans & Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sofia+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for responsive financial-grade visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Application CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Decorative Orbit Arcs (Mastercard Signature) -->
+  <div class="orbital-background" aria-hidden="true">
+    <svg class="orbital-svg" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M-100 250 C 300 80, 800 420, 1540 180" stroke="var(--mc-light-signal-orange)" stroke-width="1.2" stroke-dasharray="6 6" opacity="0.45"/>
+      <path d="M-50 680 C 450 780, 1100 480, 1600 620" stroke="var(--mc-signal-orange)" stroke-width="1" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Dashboard Hero & Global Controls (Header nav removed, theme toggle & data update preserved) -->
+    <section class="stadium-card dashboard-hero">
+      
+      <!-- Top Utility Action Row: Brand Tag + Theme Toggle + Data Update -->
+      <div class="hero-utility-row">
+        <div class="brand-tag-group">
+          <div class="eyebrow-brand"><span class="accent-dot"></span>GOOGLE ADS PERFORMANCE INTELLIGENCE</div>
+        </div>
+
+        <div class="utility-actions-group">
+          <!-- Theme Toggle Button (Kept and highlighted) -->
+          <button class="theme-toggle-btn" id="themeToggleBtn" title="테마 전환 (웜 크림 / 잉크 다크)">
+            <span class="theme-icon light-icon">☀️ 웜 크림 모드</span>
+            <span class="theme-icon dark-icon">🌙 잉크 다크 모드</span>
+          </button>
+          
+          <!-- Data Update Button -->
+          <button class="pill-btn pill-btn-primary" id="openDataModalBtn">
+            <span class="btn-icon">📥</span>
+            <span>DATA UPDATE</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-header-row">
+        <div class="hero-title-group">
+          <h1 class="hero-title">Google Ads 성과 &amp; 이상 징후 분석 대시보드</h1>
+          <p class="hero-subtitle" id="heroSummaryText">
+            출처: 90일 롤링 마스터 RD (총 <strong id="totalRowsCount">12,240</strong>건 | <span id="dateRangeSpan">2026-06-01 ~ 2026-09-10</span>) &bull; 동 분석 건수: <strong id="filteredCount">12,240</strong>건
+          </p>
+          <!-- Active Filter Breadcrumb Tag -->
+          <div class="active-filter-tags-row" id="activeFilterTagsRow">
+            <span class="active-tag-label">적용된 필터:</span>
+            <span class="filter-chip-tag" id="tagCountry">모든 국가</span>
+            <span class="filter-chip-tag" id="tagProduct">모든 제품</span>
+            <span class="filter-chip-tag" id="tagKwType">모든 키워드타입</span>
+            <span class="filter-chip-tag" id="tagCampaign">모든 캠페인</span>
+          </div>
+        </div>
+        
+        <!-- Summary KPI Pills -->
+        <div class="kpi-mini-grid">
+          <div class="kpi-mini-card">
+            <span class="kpi-mini-label">총 비용</span>
+            <span class="kpi-mini-val" id="kpiTotalCost">$0</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-mini-label">총 노출수</span>
+            <span class="kpi-mini-val" id="kpiTotalImpr">0</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-mini-label">총 클릭수</span>
+            <span class="kpi-mini-val" id="kpiTotalClicks">0</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-mini-label">평균 CTR</span>
+            <span class="kpi-mini-val highlight" id="kpiAvgCtr">0.00%</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-mini-label">평균 CPC</span>
+            <span class="kpi-mini-val" id="kpiAvgCpc">$0.00</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-mini-label">총 전환수</span>
+            <span class="kpi-mini-val highlight" id="kpiTotalConv">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Global Filter Bar with Mastercard Custom Styled Dropdowns -->
+      <div class="global-filter-bar">
+        <div class="filter-controls-group">
+          
+          <!-- Custom Country Dropdown -->
+          <div class="mc-dropdown" id="dropdownCountry">
+            <button type="button" class="mc-dropdown-trigger" id="btnDropdownCountry" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-label-prefix">국가:</span>
+              <span class="dropdown-selected-text" id="selectedCountryText">모든 국가 (10)</span>
+              <span class="mc-dropdown-arrow">▾</span>
+            </button>
+            <div class="mc-dropdown-menu" id="menuDropdownCountry" role="listbox">
+              <div class="mc-dropdown-options" id="optionsCountry">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+            <!-- Native hidden select for form/value compatibility -->
+            <select id="countryFilter" style="display:none;">
+              <option value="ALL">모든 국가 (10)</option>
+            </select>
+          </div>
+
+          <!-- Custom Product Dropdown -->
+          <div class="mc-dropdown" id="dropdownProduct">
+            <button type="button" class="mc-dropdown-trigger" id="btnDropdownProduct" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-label-prefix">제품:</span>
+              <span class="dropdown-selected-text" id="selectedProductText">모든 제품 (4)</span>
+              <span class="mc-dropdown-arrow">▾</span>
+            </button>
+            <div class="mc-dropdown-menu" id="menuDropdownProduct" role="listbox">
+              <div class="mc-dropdown-options" id="optionsProduct">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+            <select id="productFilter" style="display:none;">
+              <option value="ALL">모든 제품 (4)</option>
+            </select>
+          </div>
+
+          <!-- Custom Keyword Type Dropdown -->
+          <div class="mc-dropdown" id="dropdownKwType">
+            <button type="button" class="mc-dropdown-trigger" id="btnDropdownKwType" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-label-prefix">키워드타입:</span>
+              <span class="dropdown-selected-text" id="selectedKwTypeText">모든 키워드타입 (3)</span>
+              <span class="mc-dropdown-arrow">▾</span>
+            </button>
+            <div class="mc-dropdown-menu" id="menuDropdownKwType" role="listbox">
+              <div class="mc-dropdown-options" id="optionsKwType">
+                <div class="mc-dropdown-item selected" data-val="ALL">
+                  <span class="item-text">모든 키워드타입 (3)</span>
+                  <span class="item-check">✓</span>
+                </div>
+                <div class="mc-dropdown-item" data-val="brand">
+                  <span class="item-text">Brand (브랜드 키워드)</span>
+                  <span class="item-check"></span>
+                </div>
+                <div class="mc-dropdown-item" data-val="generic">
+                  <span class="item-text">Generic (일반 품목 키워드)</span>
+                  <span class="item-check"></span>
+                </div>
+                <div class="mc-dropdown-item" data-val="competitor">
+                  <span class="item-text">Competitor (경쟁사 키워드)</span>
+                  <span class="item-check"></span>
+                </div>
+              </div>
+            </div>
+            <select id="kwTypeFilter" style="display:none;">
+              <option value="ALL">모든 키워드타입 (3)</option>
+              <option value="brand">Brand</option>
+              <option value="generic">Generic</option>
+              <option value="competitor">Competitor</option>
+            </select>
+          </div>
+
+          <!-- Custom Campaign Dropdown with Search -->
+          <div class="mc-dropdown mc-dropdown-wide" id="dropdownCampaign">
+            <button type="button" class="mc-dropdown-trigger" id="btnDropdownCampaign" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-label-prefix">캠페인:</span>
+              <span class="dropdown-selected-text" id="selectedCampaignText">모든 캠페인 (120)</span>
+              <span class="mc-dropdown-arrow">▾</span>
+            </button>
+            <div class="mc-dropdown-menu" id="menuDropdownCampaign" role="listbox">
+              <div class="mc-dropdown-search-wrapper">
+                <input type="text" class="mc-dropdown-search" id="campaignSearchInput" placeholder="캠페인명 빠른 검색...">
+              </div>
+              <div class="mc-dropdown-options" id="optionsCampaign">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+            <select id="campaignFilter" style="display:none;">
+              <option value="ALL">모든 캠페인 (120)</option>
+            </select>
+          </div>
+
+          <!-- Reset Filter Button -->
+          <button class="pill-btn pill-btn-secondary filter-reset-btn" id="resetFiltersBtn" title="필터 초기화">
+            <span class="reset-icon">↺</span> 필터 초기화
+          </button>
+        </div>
+
+        <!-- 7-Day Anomaly Sensitivity Slider -->
+        <div class="anomaly-threshold-box">
+          <div class="threshold-label-row">
+            <span class="threshold-title">7일 대비 변동 임계치:</span>
+            <span class="threshold-val-badge" id="thresholdDisplay">&plusmn;30%</span>
+          </div>
+          <div class="slider-wrapper">
+            <input type="range" id="thresholdSlider" min="10" max="80" step="5" value="30">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Quick Product Selector Chips -->
+    <div class="product-chip-bar">
+      <div class="chip-bar-label">
+        <span class="accent-dot"></span> 제품별 성과:
+      </div>
+      <div class="product-chips-wrapper" id="productChipsContainer">
+        <button class="product-chip-btn active" data-product="ALL">
+          <span class="chip-code">ALL</span>
+          <span class="chip-name">전체</span>
+        </button>
+        <button class="product-chip-btn" data-product="냉장고">
+          <span class="chip-code">REF</span>
+          <span class="chip-name">냉장고</span>
+        </button>
+        <button class="product-chip-btn" data-product="세탁기">
+          <span class="chip-code">WM</span>
+          <span class="chip-name">세탁기</span>
+        </button>
+        <button class="product-chip-btn" data-product="전자레인지">
+          <span class="chip-code">MWO</span>
+          <span class="chip-name">전자레인지</span>
+        </button>
+        <button class="product-chip-btn" data-product="TV">
+          <span class="chip-code">TV</span>
+          <span class="chip-name">TV</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. Main Analytics Arena (Left: Interactive Trend Chart | Right: Country & Campaign Rankings) -->
+    <section class="analytics-arena-card">
+      
+      <!-- Arena Header: Section Title + Metric Selector Buttons -->
+      <div class="arena-header">
+        <div class="arena-title-group">
+          <div class="eyebrow-label"><span class="accent-dot"></span>VISUAL PERFORMANCE &amp; ANOMALY SURVEILLANCE</div>
+          <h2 class="arena-title" id="arenaMainTitle">
+            성과 트렌드 &amp; 이상 징후 시각화 분석
+            <span class="arena-sub-tag" id="arenaSubTag">90일 추세 (12,240건 분석)</span>
+          </h2>
+        </div>
+
+        <!-- Metric Switcher Pills -->
+        <div class="metric-selector-bar" role="group" aria-label="성과 지표 선택">
+          <button class="metric-pill-btn" data-metric="cost">
+            <span class="metric-dot dot-cost"></span> 비용 ($)
+          </button>
+          <button class="metric-pill-btn active" data-metric="impr">
+            <span class="metric-dot dot-impr"></span> 노출수
+          </button>
+          <button class="metric-pill-btn" data-metric="clicks">
+            <span class="metric-dot dot-clicks"></span> 클릭수
+          </button>
+          <button class="metric-pill-btn" data-metric="conversions">
+            <span class="metric-dot dot-conv"></span> 전환수
+          </button>
+          <button class="metric-pill-btn" data-metric="ctr">
+            <span class="metric-dot dot-ctr"></span> CTR (%)
+          </button>
+          <button class="metric-pill-btn" data-metric="cpc">
+            <span class="metric-dot dot-cpc"></span> CPC ($)
+          </button>
+          <button class="metric-pill-btn" data-metric="cpm">
+            <span class="metric-dot dot-cpm"></span> CPM ($)
+          </button>
+          <button class="metric-pill-btn" data-metric="cpa">
+            <span class="metric-dot dot-cpa"></span> CPA ($)
+          </button>
+        </div>
+      </div>
+
+      <!-- 2-Column Grid: Chart Area (Left) + Ranking Breakdown (Right) -->
+      <div class="arena-grid">
+        
+        <!-- Left 70%: Trend & Anomaly Chart -->
+        <div class="chart-column">
+          <div class="chart-toolbar">
+            <div class="chart-caption-group">
+              <span class="chart-caption" id="chartCaptionText">일자별 노출수 트렌드 및 이상 징후 감시</span>
+              <span class="chart-active-filter-badge" id="chartActiveFilterBadge">전체 데이터</span>
+            </div>
+            
+            <div class="chart-view-options">
+              <div class="segmented-pill-switch">
+                <button class="segment-btn active" id="viewModeSingle" data-mode="single">단일 추세선</button>
+                <button class="segment-btn" id="viewModeMulti" data-mode="multi">제품별 비교선</button>
+                <button class="segment-btn" id="viewModeCountry" data-mode="country">국가별 비교선 (TOP 5)</button>
+              </div>
+
+              <div class="chart-legend-status">
+                <span class="legend-indicator dot-current"></span><span id="currentLegendText">선택 지표</span>
+                <span class="legend-indicator dot-anomaly"></span><span>이상치 (임계치 초과)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canvas Container -->
+          <div class="chart-canvas-wrapper">
+            <canvas id="trendChart"></canvas>
+            <div class="chart-satellite-cta" title="차트 상세 인텔리전스">
+              <span>↗</span>
+            </div>
+          </div>
+
+          <!-- Bottom Micro Metrics Strip -->
+          <div class="chart-stats-strip">
+            <div class="stat-strip-item">
+              <span class="strip-label">일자별 일평균:</span>
+              <strong class="strip-val" id="stripDailyAvg">-</strong>
+            </div>
+            <div class="stat-strip-item">
+              <span class="strip-label">기간 최고치 (Peak):</span>
+              <strong class="strip-val" id="stripPeakVal">-</strong>
+            </div>
+            <div class="stat-strip-item">
+              <span class="strip-label">기간 최저치 (Trough):</span>
+              <strong class="strip-val" id="stripTroughVal">-</strong>
+            </div>
+            <div class="stat-strip-item">
+              <span class="strip-label">최근 7일 이동평균 변동:</span>
+              <strong class="strip-val" id="stripRecentShift">-</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 30%: Country & Campaign Performance Ranking Panel -->
+        <div class="ranking-column">
+          <div class="ranking-panel-card">
+            
+            <!-- Ranking Navigation Tabs -->
+            <div class="ranking-header-bar">
+              <div class="ranking-tabs">
+                <button class="ranking-tab-btn active" id="rankTabCountry" data-tab="country">
+                  <span>국가별</span>
+                </button>
+                <button class="ranking-tab-btn" id="rankTabCampaign" data-tab="campaign">
+                  <span>캠페인별</span>
+                </button>
+              </div>
+
+              <!-- Sorting Controls -->
+              <div class="ranking-sort-controls">
+                <button class="sort-chip-btn active" id="sortVolumeBtn" data-sort="volume" title="지표 볼륨순 내림차순 정렬">
+                  볼륨순 &darr;
+                </button>
+                <button class="sort-chip-btn" id="sortShiftBtn" data-sort="shift" title="최근 7일 변동폭(절댓값) 순 정렬">
+                  변동폭순 &darr;
+                </button>
+              </div>
+            </div>
+
+            <!-- Direction Filter Chips (전체 / 급상승 / 급하락) -->
+            <div class="ranking-filter-subbar">
+              <div class="rank-count-badge" id="rankItemCountBadge">총 10개 국가</div>
+              <div class="direction-filter-group">
+                <button class="direction-btn active" data-dir="all" title="기본 정렬">전체</button>
+                <button class="direction-btn" data-dir="up" title="변동률 높은 순 (상승 순서)">▲ 급상승</button>
+                <button class="direction-btn" data-dir="down" title="변동률 낮은 순 (하락 순서)">▼ 급하락</button>
+              </div>
+            </div>
+
+            <!-- Ranking Items Scroll List -->
+            <div class="ranking-list" id="rankingListContainer">
+              <!-- Dynamically populated ranking cards -->
+            </div>
+
+            <div class="ranking-footer-hint">
+              <span>* 항목 클릭 시 해당 조건으로 대시보드가 필터링됩니다.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. Anomaly Ribbon: Latest Day Diagnostic Status -->
+    <section class="anomaly-ribbon-card">
+      <div class="ribbon-label">
+        <span class="accent-dot"></span> 최신일 진단 현황:
+      </div>
+      <div class="anomaly-chips-grid" id="anomalyRibbonContainer">
+        <button class="anomaly-badge-btn" data-filter-status="cost_spike">
+          <span class="badge-dot badge-red"></span> 비용 급증: <strong id="cntCostSpike">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="cost_drop">
+          <span class="badge-dot badge-orange"></span> 비용 급감: <strong id="cntCostDrop">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="impr_drop">
+          <span class="badge-dot badge-orange"></span> 노출 급감: <strong id="cntImprDrop">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="clicks_drop">
+          <span class="badge-dot badge-orange"></span> 클릭 급감: <strong id="cntClicksDrop">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="ctr_drop">
+          <span class="badge-dot badge-yellow"></span> CTR 급감: <strong id="cntCtrDrop">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="cpc_spike">
+          <span class="badge-dot badge-yellow"></span> CPC 급등: <strong id="cntCpcSpike">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="cpm_spike">
+          <span class="badge-dot badge-yellow"></span> CPM 급등: <strong id="cntCpmSpike">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="cpa_spike">
+          <span class="badge-dot badge-red"></span> CPA 급등: <strong id="cntCpaSpike">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn" data-filter-status="rebound">
+          <span class="badge-dot badge-blue"></span> 반등/회복: <strong id="cntRebound">0건</strong>
+        </button>
+        <button class="anomaly-badge-btn active-status" data-filter-status="ALL">
+          <span class="badge-dot badge-green"></span> 정상/전체: <strong id="cntNormal">0건</strong>
+        </button>
+      </div>
+    </section>
+
+    <!-- 6. Detailed Performance Table Grid -->
+    <section class="stadium-card table-section">
+      <div class="table-header-row">
+        <div>
+          <div class="eyebrow-label"><span class="accent-dot"></span>RAW DATA &amp; AUDIT TRAIL</div>
+          <h3 class="table-section-title">
+            일자별/캠페인별 성과 상세 내역
+            <span class="table-count-badge" id="tableFilterStatusBadge">전체 12,240건</span>
+          </h3>
+        </div>
+
+        <div class="table-actions">
+          <div class="search-pill-input">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="tableSearchInput" placeholder="국가, 제품, 캠페인명 검색...">
+          </div>
+          <button class="pill-btn pill-btn-secondary" id="exportCsvBtn" title="필터링된 데이터 CSV 내보내기">
+            <span>📥 내보내기 (CSV)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-responsive-container">
+        <table class="master-data-table" id="dataTable">
+          <thead>
+            <tr>
+              <th data-sort-col="status">상태 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="country">국가 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="product">제품 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="keywordType">타입 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="campaign">캠페인명 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="date">일자 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="cost" class="num-col">비용 ($) <span class="th-sort">⇅</span></th>
+              <th data-sort-col="impr" class="num-col">노출 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="clicks" class="num-col">클릭 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="ctr" class="num-col">CTR (%) <span class="th-sort">⇅</span></th>
+              <th data-sort-col="cpc" class="num-col">CPC ($) <span class="th-sort">⇅</span></th>
+              <th data-sort-col="cpm" class="num-col">CPM ($) <span class="th-sort">⇅</span></th>
+              <th data-sort-col="conversions" class="num-col">전환 <span class="th-sort">⇅</span></th>
+              <th data-sort-col="cpa" class="num-col">CPA ($) <span class="th-sort">⇅</span></th>
+              <th data-sort-col="diagnosis">진단 <span class="th-sort">⇅</span></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Dynamically populated table rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Pagination Bar -->
+      <div class="table-pagination-bar">
+        <div class="pagination-info" id="paginationInfo">
+          1 - 15 of 12,240 rows
+        </div>
+        <div class="pagination-controls">
+          <label for="pageSizeSelect" class="page-size-label">페이지당 건수:</label>
+          <select id="pageSizeSelect" class="page-size-select">
+            <option value="15" selected>15개씩</option>
+            <option value="30">30개씩</option>
+            <option value="50">50개씩</option>
+            <option value="100">100개씩</option>
+          </select>
+          <div class="page-nav-btns">
+            <button class="pill-page-btn" id="prevPageBtn" disabled>&lsaquo; 이전</button>
+            <span class="current-page-display" id="currentPageDisplay">1 / 816</span>
+            <button class="pill-page-btn" id="nextPageBtn">다음 &rsaquo;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Mastercard Signature Editorial Footer -->
+    <footer class="mastercard-footer">
+      <div class="footer-inner">
+        <div class="footer-hero-headline">
+          구글 검색 광고 성과 인텔리전스와 함께<br>모든 마케팅 의사결정을 더 정교하게.
+        </div>
+        
+        <div class="footer-links-grid">
+          <div class="footer-col">
+            <div class="footer-col-header">인텔리전스 엔진</div>
+            <ul class="footer-links">
+              <li><a href="#tabDashboard">성과 트렌드 90D RD ↗</a></li>
+              <li><a href="#tabSearchTerms">검색어 인텔리전스 ↗</a></li>
+              <li><a href="#tabBudgetPacing">비용 Pacing 예측 모니터링 ↗</a></li>
+              <li><a href="#" id="footerThresholdLink">이상 징후 탐지 알고리즘</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <div class="footer-col-header">핵심 모니터링 지표</div>
+            <ul class="footer-links">
+              <li><a href="#">비용 (Cost) &amp; 노출 (Impressions)</a></li>
+              <li><a href="#">클릭수 (Clicks) &amp; CTR (%)</a></li>
+              <li><a href="#">CPC ($) &amp; CPM ($) Pacing</a></li>
+              <li><a href="#">전환수 (Conversions) &amp; CPA ($)</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <div class="footer-col-header">지원 국가 및 제품군</div>
+            <ul class="footer-links">
+              <li><a href="#">글로벌 10개국 (독일, 프랑스, 영국 등)</a></li>
+              <li><a href="#">냉장고 (REF), 세탁기 (WM)</a></li>
+              <li><a href="#">전자레인지 (MWO), TV</a></li>
+              <li><a href="#">브랜드 / 제네릭 / 경쟁사 키워드</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <div class="footer-col-header">NEED HELP?</div>
+            <ul class="footer-links">
+              <li><a href="#">💬 대시보드 사용 가이드</a></li>
+              <li><a href="#">📈 이상 징후 진단 기준 안내</a></li>
+              <li><a href="#">🛡️ 데이터 거버넌스 및 보안</a></li>
+              <li><a href="#">⚙️ 데이터 업데이트 연동 규격</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-divider"></div>
+
+        <div class="footer-bottom-row">
+          <div class="copyright-text">
+            &copy; 2026 Google Ads Marketing Intelligence Engine. Designed in Mastercard Aesthetic System.
+          </div>
+          <div class="footer-country-pill">
+            <span>🌐 대한민국 (KRW / USD)</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Data Update Modal -->
+  <div class="modal-overlay" id="dataUpdateModal" aria-hidden="true">
+    <div class="modal-card stadium-card">
+      <div class="modal-header">
+        <div class="eyebrow-label"><span class="accent-dot"></span>DATA MANAGEMENT</div>
+        <h3 class="modal-title">광고 성과 데이터 업데이트</h3>
+        <button class="modal-close-btn" id="closeDataModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          새로운 일자별 검색 광고 성과 CSV 파일을 업로드하여 대시보드를 즉시 갱신할 수 있습니다.<br>
+          (필수 컬럼: <code>product, country, keyword type, data, cost, impr, clicks, conversions</code>)
+        </p>
+        <div class="drop-zone" id="csvDropZone">
+          <div class="drop-icon">📁</div>
+          <div class="drop-title">CSV 파일을 이곳에 드래그하거나 클릭하여 선택하세요</div>
+          <div class="drop-sub">최대 20MB (.csv) 파일 지원</div>
+          <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+        </div>
+        <div class="modal-status" id="uploadStatusText"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="pill-btn pill-btn-secondary" id="cancelModalBtn">취소</button>
+        <button class="pill-btn pill-btn-primary" id="restoreDefaultBtn">기본 더미데이터 복원</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw Data Bundle (for instant zero-setup local file opening) -->
+  <script src="data.js"></script>
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
